@@ -4,9 +4,17 @@ This is a simple imitation to the Game [Pong](https://en.wikipedia.org/wiki/Pong
 
 ## Installation
 
-If you want to play the Game, you have to chek, that you have installed a python version of 3.x and also has installed PyGame via `pip install pygame`. If you have this, you can run the python-file `pong.py`.
+What you need:
+- Python 3
+- PyGame-Libary (install it via `pip install PyGame`)
+
+Now you can run the python File, `pong.py`.
 
 ## Features
 
-Curently, if you start the Game, you need to press the Space-Key to start the Game. Now you can control the Punchers with WASD for the left and the Arrow-Keys for the right. You can also pause the game by pressing Space again. If you loose, you need to restart the Game.
-
+If you run the script:
+- press Space to start
+- Left PLayer can move his puncher via W (Upwards) and S (Downwards)
+- Right Player can move his puncher via Key-Up and Key-Down
+- If one Player scored -> Press Space to start next game
+- If you want to close, press Esc or click on the Windos-Close-Button
