@@ -3,12 +3,19 @@
 """
 Created on Mon Feb 14 19:46:44 2022
 
-@author: felix
+@author: InfinityCoding
 """
+
+# =============================================================================
+# Import reqirements
+# =============================================================================
 
 import pygame, sys, random
 
+# =============================================================================
 # Initial Variables
+# =============================================================================
+
 FACTOR = 1
 WIDTH = 960 * FACTOR
 HEIGTH = 540 * FACTOR
@@ -16,46 +23,66 @@ FPS = 60
 GAMEOVER = False
 PAUSE = True 
 WINNER = None
-
+WINS = [0, 0] # List where the Wins will saved (idx0 = left, idx1 = right)
+ 
+# =============================================================================
 # Pygame Set-Up
+# =============================================================================
+
 pygame.init()
 pygame.display.set_caption("Ping Pong")
 screen = pygame.display.set_mode( (WIDTH, HEIGTH) )
 clock = pygame.time.Clock()
 pygame.mouse.set_visible(False) # Hide Mouse while Playing
 
+# =============================================================================
+# Creating a Class for the punchers
+# =============================================================================
 
 class punch(pygame.sprite.Sprite):
     def __init__(self, side, FACTOR):
         super().__init__()
-        self.image = pygame.Surface([5*FACTOR, 60*FACTOR]) # Puncher
+        self.FACTOR = FACTOR
+        self.image = pygame.Surface([5*self.FACTOR, 60*self.FACTOR]) # Puncher
         self.image.fill((255, 255, 255)) # Change Color of Puncher to white
         self.rect = self.image.get_rect()
         self.side = side
         if self.side == "left":
-            self.pos = [10*FACTOR, HEIGTH//2]
+            self.pos = [10*self.FACTOR, HEIGTH//2]
             self.rect.center = self.pos
         else:
-            self.pos = [WIDTH-10*FACTOR, HEIGTH//2]
+            self.pos = [WIDTH-10*self.FACTOR, HEIGTH//2]
             self.rect.center = self.pos
             
     def key_input(self):
         """Checking Keyboard-Input and change if necessary the Position of the Puncher"""
         keys = pygame.key.get_pressed()
         if self.side == "right": # if right Puncher
-            if keys[pygame.K_UP] and self.pos[1] > 30*FACTOR: # if Arrow-Up pressed and Windowborder not reached
-                self.pos = [self.pos[0], self.pos[1]-10*FACTOR]
-            if keys[pygame.K_DOWN] and self.pos[1] < HEIGTH-30*FACTOR: # if Arrow-Down pressed and Windowborder not reached
-                self.pos = [self.pos[0], self.pos[1]+10*FACTOR]
+            if keys[pygame.K_UP] and self.pos[1] > 30*self.FACTOR: # if Arrow-Up pressed and Windowborder not reached
+                self.pos = [self.pos[0], self.pos[1]-10*self.FACTOR]
+            if keys[pygame.K_DOWN] and self.pos[1] < HEIGTH-30*self.FACTOR: # if Arrow-Down pressed and Windowborder not reached
+                self.pos = [self.pos[0], self.pos[1]+10*self.FACTOR]
         else: # if right Puncher
-            if keys[pygame.K_w] and self.pos[1] > 30*FACTOR: # if W pressed (Up) and Windowborder not reached
-                self.pos = [self.pos[0], self.pos[1]-10*FACTOR]
-            if keys[pygame.K_s] and self.pos[1] < HEIGTH-30*FACTOR: # if S pressed (Down) and Windowborder not reached
-                self.pos = [self.pos[0], self.pos[1]+10*FACTOR]
+            if keys[pygame.K_w] and self.pos[1] > 30*self.FACTOR: # if W pressed (Up) and Windowborder not reached
+                self.pos = [self.pos[0], self.pos[1]-10*self.FACTOR]
+            if keys[pygame.K_s] and self.pos[1] < HEIGTH-30*self.FACTOR: # if S pressed (Down) and Windowborder not reached
+                self.pos = [self.pos[0], self.pos[1]+10*self.FACTOR]
+            
+    def reset(self):
+        if self.side == "left":
+            self.pos = [10*self.FACTOR, HEIGTH//2]
+            self.rect.center = self.pos
+        else:
+            self.pos = [WIDTH-10*self.FACTOR, HEIGTH//2]
+            self.rect.center = self.pos
                 
     def update(self):
         self.key_input()
         self.rect.center = self.pos
+        
+# =============================================================================
+# Creating a Class for the Ball
+# =============================================================================
 
 class Ball(pygame.sprite.Sprite):
     def __init__(self):
@@ -73,6 +100,8 @@ class Ball(pygame.sprite.Sprite):
         if self.rect.right >= WIDTH or self.rect.left <= 0: # if the Ball reched the right or left border -> GameOver
             GAMEOVER = True 
             WINNER = "right" if self.direction.x < 0 else "left"
+            WINS[0] += 1 if WINNER == "left" else WINS[0]
+            WINS[1] += 1 if WINNER == "right" else WINS[1]
             pygame.mouse.set_visible(True) # show Mouse
         
     def createDirection(self):
@@ -80,6 +109,10 @@ class Ball(pygame.sprite.Sprite):
         direction = (random.randint(2, 5), random.randint(-5, -2))
         direction = random.choice(direction)
         return direction
+    
+    def reset(self):
+        self.rect.center = (WIDTH//2, HEIGTH//2) # set position to the Window-center
+        self.direction = pygame.math.Vector2(self.createDirection(), self.createDirection()) # create random 2d-Vector 
 
     def update(self):
         self.checkDirection() # check if ball reached one of the Window-Borders
@@ -91,14 +124,27 @@ class Ball(pygame.sprite.Sprite):
             if self.direction.x < 0: # if moving to the left
                 self.rect.left = 10*FACTOR + 5*FACTOR/2
             else:
-                self.rect.right = WIDTH*FACTOR - (10*FACTOR + 5*FACTOR/2)
+                self.rect.right = WIDTH - (10*FACTOR + 5*FACTOR/2)
             self.direction.x = -self.direction.x # invert the x-Direction
             
-def debug(info, pos=(10, 10)): # Function for render Infos
-    font = pygame.font.SysFont("dejavusansmono", 10)    
+# =============================================================================
+# define a Function for render messages
+# =============================================================================
+            
+def debug(info, pos=(10, 10), text_size = 10, centered=False, offset = 0): # Function for render Infos
+    font = pygame.font.SysFont("liberationserif", text_size)    
     text = font.render(str(info), True, (255, 255, 255))
+    if centered:
+        center = [WIDTH//2-text.get_width()//2, HEIGTH//2-text.get_height()//2]
+        center[1] += text.get_height()*offset
+        pos = center
     screen.blit(text, pos)
+    pygame.display.update()
 
+
+# =============================================================================
+# Setting up the elements and variables
+# =============================================================================
 
 # Creating Instances and Sprites
 left_punch = punch("left", FACTOR) # define an new Instance of the punch-Class for creating the left puncher
@@ -114,13 +160,13 @@ punchers.add(left_punch)
 punchers.add(right_punch)
 ball_sprite.add(ball)
 
-screen.fill('black')
-font = pygame.font.SysFont("liberationserif", 50*FACTOR)
-message_Pause = font.render("Paused! Press space to continue.", True, (255, 255, 255)) # Game Over Text
-screen.blit(message_Pause, (WIDTH//2-message_Pause.get_width()//2, HEIGTH//2-message_Pause.get_height()//2))
+debug("Press space to start!", text_size=50, centered = True)
                     
 
-# main Game Loop
+# =============================================================================
+# Starting main Game Loop
+# =============================================================================
+
 while True:   
     for event in pygame.event.get(): # cheking for events
         if event.type == pygame.QUIT: # if teh user close the Window
@@ -131,11 +177,18 @@ while True:
                 if PAUSE:
                     PAUSE = False
                     pygame.mouse.set_visible(False)
+                elif GAMEOVER:
+                    ball.reset()
+                    left_punch.reset()
+                    right_punch.reset()
+                    GAMEOVER = False
+                    PAUSE = True
+                    screen.fill("black")
+                    debug("Press space to start!", text_size=50, centered=True)
                 else:
-                    screen.fill('black')
-                    font = pygame.font.SysFont("liberationserif", 50*FACTOR)
-                    message_Pause = font.render("Paused! Press space to continue.", True, (255, 255, 255)) # Game Over Text
-                    screen.blit(message_Pause, (WIDTH//2-message_Pause.get_width()//2, HEIGTH//2-message_Pause.get_height()//2))
+                    screen.fill("black")
+                    debug("Paused!", text_size=50, centered=True, offset = -0.5)
+                    debug("Press space to continue.", text_size=50, centered=True, offset = 0.5)
                     PAUSE = True
                     pygame.mouse.set_visible(True)
             if event.key == pygame.K_ESCAPE:
@@ -155,16 +208,10 @@ while True:
         pygame.display.update()
         clock.tick(FPS)        
 
-    if GAMEOVER == True:
-        screen.fill('black')
-        # creating a Game Over and Winner Text
-        font = pygame.font.SysFont("liberationserif", 50*FACTOR)
-        message_GO = font.render("Game Over!", True, (255, 255, 255)) # Game Over Text
-        message_WN = font.render("The %s player winns!" % WINNER, True, (255, 255, 255)) # Winner Text
-        # add the messages to the screen
-        screen.blit(message_GO, (WIDTH//2-message_GO.get_width()//2, HEIGTH//2-message_GO.get_height()))
-        screen.blit(message_WN, (WIDTH//2-message_WN.get_width()//2, HEIGTH//2))
-        # update the Screen
-        pygame.display.update()
-        # needs to run further untill the user triggerd the QUIT-Event
+    elif GAMEOVER == True:
+        screen.fill("black")
+        debug("The %s player scored!" % WINNER, text_size=50, centered=True, offset = -0.5) # Scoring text
+        debug("Press space to continue!") # Scoring text
+        debug("%s" % WINS, text_size=50, centered=True, offset = 0.5) # Scoring text
+        
         clock.tick(1)
