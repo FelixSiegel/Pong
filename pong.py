@@ -100,8 +100,8 @@ class Ball(pygame.sprite.Sprite):
         if self.rect.right >= WIDTH or self.rect.left <= 0: # if the Ball reched the right or left border -> GameOver
             GAMEOVER = True 
             WINNER = "right" if self.direction.x < 0 else "left"
-            WINS[0] += 1 if WINNER == "left" else WINS[0]
-            WINS[1] += 1 if WINNER == "right" else WINS[1]
+            WINS[0] += 1 if WINNER == "left" else 0
+            WINS[1] += 1 if WINNER == "right" else 0
             pygame.mouse.set_visible(True) # show Mouse
         
     def createDirection(self):
